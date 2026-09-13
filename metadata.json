@@ -1,0 +1,6 @@
+{
+  "name": "I.S.H.A.",
+  "description": "Intelligent Speech-based Human Assistant - Offline AI Companion with interactive 3D robot interface.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
