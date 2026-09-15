@@ -32,6 +32,7 @@ export function speakResponse(text, onStart, onEnd) {
   }
 
   window.speechSynthesis.cancel();
+  isProcessingCommand = true;
 
   const utterance = new SpeechSynthesisUtterance(text);
   // Fast & crisp speech rate for "Yes?" response
@@ -49,15 +50,23 @@ export function speakResponse(text, onStart, onEnd) {
   }
 
   utterance.onstart = () => {
+    isProcessingCommand = true;
     if (onStart) onStart();
   };
 
+  const handleFinish = () => {
+    setTimeout(() => {
+      isProcessingCommand = false;
+      if (onEnd) onEnd();
+    }, 400);
+  };
+
   utterance.onend = () => {
-    if (onEnd) onEnd();
+    handleFinish();
   };
 
   utterance.onerror = () => {
-    if (onEnd) onEnd();
+    handleFinish();
   };
 
   window.speechSynthesis.speak(utterance);
@@ -210,6 +219,15 @@ export function initSpeechEngine(callbacks = {}) {
       const transcript = rawTranscript.toLowerCase();
 
       if (!transcript) continue;
+
+      // Ignore self-referential introductory phrases spoken by ISHA itself
+      const isSelfIntroEcho =
+        transcript.includes('hello i am isha') ||
+        transcript.includes("hello i'm isha") ||
+        transcript.includes('i am isha') ||
+        transcript.includes('iam isha');
+
+      if (isSelfIntroEcho) continue;
 
       // -------------------------------------------------------------
       // STAGE 2: Currently inside the 5-second post-wake listening window

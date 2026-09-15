@@ -20,14 +20,14 @@ export const IntroSplash = ({ onComplete }) => {
     // Smooth fade out after sequence completes
     const fadeTimer = setTimeout(() => {
       setIsFadingOut(true);
-    }, 3400);
+    }, 2400);
 
     const completeTimer = setTimeout(() => {
       setIsVisible(false);
       if (typeof onComplete === 'function') {
         onComplete();
       }
-    }, 4400);
+    }, 2900);
 
     return () => {
       clearTimeout(fadeTimer);
@@ -40,7 +40,7 @@ export const IntroSplash = ({ onComplete }) => {
   return (
     <div
       id="intro-splash-screen"
-      className={`fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center select-none overflow-hidden transition-opacity duration-1000 ${
+      className={`fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center select-none overflow-hidden transition-opacity duration-500 ${
         isFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
       }`}
     >

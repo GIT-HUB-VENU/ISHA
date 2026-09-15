@@ -15,6 +15,7 @@ import {
   startVoiceListening,
   stopVoiceListening,
   executeVoiceCommand,
+  speakResponse,
 } from './controllers/speechController.js';
 
 export default function App() {
@@ -30,6 +31,23 @@ export default function App() {
   const homeRef = useRef(null);
   const aboutRef = useRef(null);
   const featuresRef = useRef(null);
+  const hasSpokenWelcomeRef = useRef(false);
+
+  // Verbal welcome greeting on load/reload without showing text on screen
+  const speakWelcomeGreeting = useCallback(() => {
+    if (hasSpokenWelcomeRef.current) return;
+    hasSpokenWelcomeRef.current = true;
+    speakResponse(
+      'Hello! I am ISHA...',
+      () => setAssistantState(ASSISTANT_STATES.SPEAKING),
+      () => setAssistantState(ASSISTANT_STATES.IDLE)
+    );
+  }, []);
+
+  const handleIntroComplete = useCallback(() => {
+    setShowIntro(false);
+    speakWelcomeGreeting();
+  }, [speakWelcomeGreeting]);
 
   // Toggle Continuous Microphone & Wake Word Listening Engine
   const toggleMicActivation = useCallback(() => {
@@ -76,11 +94,22 @@ export default function App() {
       }
     }, 500);
 
+    const handleInteraction = () => {
+      speakWelcomeGreeting();
+      window.removeEventListener('click', handleInteraction);
+      window.removeEventListener('keydown', handleInteraction);
+    };
+
+    window.addEventListener('click', handleInteraction);
+    window.addEventListener('keydown', handleInteraction);
+
     return () => {
       clearTimeout(autoStartTimer);
+      window.removeEventListener('click', handleInteraction);
+      window.removeEventListener('keydown', handleInteraction);
       stopVoiceListening();
     };
-  }, []);
+  }, [speakWelcomeGreeting]);
 
   // Scroll navigation
   const scrollToSection = (tab) => {
@@ -149,7 +178,7 @@ export default function App() {
       className="relative min-h-screen bg-black text-white selection:bg-cyan-500 selection:text-black overflow-x-hidden font-['Space_Grotesk',sans-serif]"
     >
       {/* Introduction Screen on reload */}
-      {showIntro && <IntroSplash onComplete={() => setShowIntro(false)} />}
+      {showIntro && <IntroSplash onComplete={handleIntroComplete} />}
 
       {/* Background Ambience */}
       <FuturisticBackground />

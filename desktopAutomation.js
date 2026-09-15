@@ -59,6 +59,35 @@ export function handleDesktopCommand(commandText) {
     normalized.includes('turn off') ||
     normalized.includes('terminate')
   ) {
+    // Special Command: Close All Applications (Excluding Chrome)
+    const isCloseAllCommand =
+      normalized.includes('close all') ||
+      normalized.includes('close everything') ||
+      normalized.includes('terminate all') ||
+      normalized.includes('exit all') ||
+      normalized.includes('stop all') ||
+      normalized.includes('kill all') ||
+      normalized === 'close all applications' ||
+      normalized === 'close all application' ||
+      normalized === 'close all apps' ||
+      normalized === 'close all open apps' ||
+      normalized === 'close all opened applications' ||
+      normalized === 'close all opened apps' ||
+      normalized === 'close all running applications' ||
+      normalized === 'close all running apps';
+
+    if (isCloseAllCommand) {
+      const closeAllCmd = `powershell -Command "Stop-Process -Name Code, code, Taskmgr, taskmgr, calc, CalculatorApp, Calculator, notepad, NotepadApp, WhatsApp, WhatsApp.Server, WhatsApp.Root, brave, Spotify, spotify, Discord, discord, msedge, mspaint, SystemSettings, WindowsTerminal, cmd -Force -ErrorAction SilentlyContinue; (New-Object -ComObject Shell.Application).Windows() | ForEach-Object { $_.Quit() }"`;
+      exec(closeAllCmd, (err) => {
+        if (err) console.error('Notice closing all applications:', err);
+      });
+      return {
+        intent: 'CLOSE_ALL_APPLICATIONS',
+        response: 'Closed all opened applications Well.. Im not Closing Myself',
+        status: 'SUCCESS',
+      };
+    }
+
     // If user only said "close" or "close app" without naming the application
     if (
       normalized === 'close' ||
@@ -620,7 +649,7 @@ export function handleDesktopCommand(commandText) {
 
   // 5. System Controls (Mute, Volume Up/Down, Media, Lock PC)
   if (normalized.includes('mute') || normalized.includes('unmute')) {
-    exec('powershell -Command "(New-Object -ComObject WScript.Shell).SendKeys([char]173)"', () => {});
+    exec('powershell -Command "(New-Object -ComObject WScript.Shell).SendKeys([char]173)"', () => { });
     return {
       intent: 'SYSTEM_CONTROL',
       response: 'Toggled system audio mute.',
@@ -637,7 +666,7 @@ export function handleDesktopCommand(commandText) {
       normalized.includes('by 0') ||
       normalized.includes('to 0')
     ) {
-      exec('powershell -Command "(New-Object -ComObject WScript.Shell).SendKeys([char]173)"', () => {});
+      exec('powershell -Command "(New-Object -ComObject WScript.Shell).SendKeys([char]173)"', () => { });
       return {
         intent: 'SYSTEM_CONTROL',
         response: 'Toggled system audio mute.',
@@ -664,7 +693,7 @@ export function handleDesktopCommand(commandText) {
       }
 
       if (steps === 0) {
-        exec('powershell -Command "(New-Object -ComObject WScript.Shell).SendKeys([char]173)"', () => {});
+        exec('powershell -Command "(New-Object -ComObject WScript.Shell).SendKeys([char]173)"', () => { });
         return {
           intent: 'SYSTEM_CONTROL',
           response: 'Toggled system audio mute.',
@@ -674,7 +703,7 @@ export function handleDesktopCommand(commandText) {
 
       steps = Math.max(1, Math.min(50, steps));
 
-      exec(`powershell -Command "$w=New-Object -ComObject WScript.Shell; 1..${steps} | % {$w.SendKeys([char]175)}"`, () => {});
+      exec(`powershell -Command "$w=New-Object -ComObject WScript.Shell; 1..${steps} | % {$w.SendKeys([char]175)}"`, () => { });
       return {
         intent: 'SYSTEM_CONTROL',
         response: `Increased system volume by ${steps} levels.`,
@@ -701,7 +730,7 @@ export function handleDesktopCommand(commandText) {
       }
 
       if (steps === 0) {
-        exec('powershell -Command "(New-Object -ComObject WScript.Shell).SendKeys([char]173)"', () => {});
+        exec('powershell -Command "(New-Object -ComObject WScript.Shell).SendKeys([char]173)"', () => { });
         return {
           intent: 'SYSTEM_CONTROL',
           response: 'Toggled system audio mute.',
@@ -711,7 +740,7 @@ export function handleDesktopCommand(commandText) {
 
       steps = Math.max(1, Math.min(50, steps));
 
-      exec(`powershell -Command "$w=New-Object -ComObject WScript.Shell; 1..${steps} | % {$w.SendKeys([char]174)}"`, () => {});
+      exec(`powershell -Command "$w=New-Object -ComObject WScript.Shell; 1..${steps} | % {$w.SendKeys([char]174)}"`, () => { });
       return {
         intent: 'SYSTEM_CONTROL',
         response: `Decreased system volume by ${steps} levels.`,
@@ -721,7 +750,7 @@ export function handleDesktopCommand(commandText) {
   }
 
   if (normalized.includes('pause music') || normalized.includes('play music') || normalized.includes('media play') || normalized.includes('media pause')) {
-    exec('powershell -Command "(New-Object -ComObject WScript.Shell).SendKeys([char]179)"', () => {});
+    exec('powershell -Command "(New-Object -ComObject WScript.Shell).SendKeys([char]179)"', () => { });
     return {
       intent: 'SYSTEM_CONTROL',
       response: 'Toggled media playback.',
@@ -730,7 +759,7 @@ export function handleDesktopCommand(commandText) {
   }
 
   if (normalized.includes('lock pc') || normalized.includes('lock computer') || normalized.includes('lock screen')) {
-    exec('rundll32.exe user32.dll,LockWorkStation', () => {});
+    exec('rundll32.exe user32.dll,LockWorkStation', () => { });
     return {
       intent: 'SYSTEM_CONTROL',
       response: 'Locking computer screen.',
@@ -746,7 +775,7 @@ export function handleDesktopCommand(commandText) {
       .trim();
     if (!query) query = 'trending music';
 
-    exec(`start chrome "https://www.youtube.com/results?search_query=${encodeURIComponent(query)}" || start msedge "https://www.youtube.com/results?search_query=${encodeURIComponent(query)}"`, () => {});
+    exec(`start chrome "https://www.youtube.com/results?search_query=${encodeURIComponent(query)}" || start msedge "https://www.youtube.com/results?search_query=${encodeURIComponent(query)}"`, () => { });
     return {
       intent: 'WEB_SEARCH',
       response: `Searching and playing "${query}" on YouTube.`,
@@ -760,7 +789,7 @@ export function handleDesktopCommand(commandText) {
       .trim();
     if (!query) query = 'latest news';
 
-    exec(`start chrome "https://www.google.com/search?q=${encodeURIComponent(query)}" || start msedge "https://www.google.com/search?q=${encodeURIComponent(query)}"`, () => {});
+    exec(`start chrome "https://www.google.com/search?q=${encodeURIComponent(query)}" || start msedge "https://www.google.com/search?q=${encodeURIComponent(query)}"`, () => { });
     return {
       intent: 'WEB_SEARCH',
       response: `Searching Google for "${query}".`,
@@ -769,7 +798,7 @@ export function handleDesktopCommand(commandText) {
   }
 
   if (normalized.includes('chatgpt') || normalized.includes('chat gpt')) {
-    exec('start chrome "https://chatgpt.com" || start msedge "https://chatgpt.com"', () => {});
+    exec('start chrome "https://chatgpt.com" || start msedge "https://chatgpt.com"', () => { });
     return {
       intent: 'WEB_SEARCH',
       response: 'Opening ChatGPT in browser.',
@@ -778,7 +807,7 @@ export function handleDesktopCommand(commandText) {
   }
 
   if (normalized.includes('github')) {
-    exec('start chrome "https://github.com" || start msedge "https://github.com"', () => {});
+    exec('start chrome "https://github.com" || start msedge "https://github.com"', () => { });
     return {
       intent: 'WEB_SEARCH',
       response: 'Opening GitHub in browser.',
@@ -787,7 +816,7 @@ export function handleDesktopCommand(commandText) {
   }
 
   if (normalized.includes('wikipedia')) {
-    exec('start chrome "https://wikipedia.org" || start msedge "https://wikipedia.org"', () => {});
+    exec('start chrome "https://wikipedia.org" || start msedge "https://wikipedia.org"', () => { });
     return {
       intent: 'WEB_SEARCH',
       response: 'Opening Wikipedia in browser.',
@@ -840,7 +869,7 @@ export function handleDesktopCommand(commandText) {
           status: 'SUCCESS',
         };
       }
-    } catch (_) {}
+    } catch (_) { }
   }
 
   if (normalized.includes('joke') || normalized.includes('funny')) {
@@ -885,12 +914,19 @@ export function handleDesktopCommand(commandText) {
   if (
     normalized.includes('who are you') ||
     normalized.includes('what are you') ||
-    normalized.includes('your name')
+    normalized.includes('your name') ||
+    normalized.includes('tell about yourself') ||
+    normalized.includes('tell me about yourself') ||
+    normalized.includes('about yourself') ||
+    normalized.includes('why are you here') ||
+    normalized.includes('who made you') ||
+    normalized.includes('who created you') ||
+    normalized.includes('introduce yourself')
   ) {
     return {
       intent: 'CONVERSATION',
       response:
-        'I am I.S.H.A., your Intelligent Speech-based Human Assistant and offline AI companion.',
+        'Iam ISHA... Venu created me ! Now i deal with his laptop and all the digital chaos, whether he likes it or not who cares !',
       status: 'SUCCESS',
     };
   }
@@ -911,7 +947,7 @@ export function handleDesktopCommand(commandText) {
   // Fallback for general speech instructions
   return {
     intent: 'CONVERSATION',
-    response: `Processed instruction: "${commandText}". Command executed.`,
+    response: `ask Venu Do not disturb Me `,
     status: 'SUCCESS',
   };
 }

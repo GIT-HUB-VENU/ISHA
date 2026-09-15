@@ -64,6 +64,30 @@ export async function parseAndExecuteCommand(commandText) {
     normalized.includes('turn off') ||
     normalized.includes('terminate')
   ) {
+    const isCloseAllCommand =
+      normalized.includes('close all') ||
+      normalized.includes('close everything') ||
+      normalized.includes('terminate all') ||
+      normalized.includes('exit all') ||
+      normalized.includes('stop all') ||
+      normalized.includes('kill all') ||
+      normalized === 'close all applications' ||
+      normalized === 'close all application' ||
+      normalized === 'close all apps' ||
+      normalized === 'close all open apps' ||
+      normalized === 'close all opened applications' ||
+      normalized === 'close all opened apps' ||
+      normalized === 'close all running applications' ||
+      normalized === 'close all running apps';
+
+    if (isCloseAllCommand) {
+      return {
+        intent: 'CLOSE_ALL_APPLICATIONS',
+        response: 'Closed all opened applications except Chrome.',
+        status: 'SUCCESS',
+      };
+    }
+
     if (
       normalized === 'close' ||
       normalized === 'close app' ||
@@ -476,6 +500,26 @@ export async function parseAndExecuteCommand(commandText) {
         status: 'SUCCESS',
       };
     }
+  }
+
+  if (
+    normalized.includes('who are you') ||
+    normalized.includes('what are you') ||
+    normalized.includes('your name') ||
+    normalized.includes('tell about yourself') ||
+    normalized.includes('tell me about yourself') ||
+    normalized.includes('about yourself') ||
+    normalized.includes('why are you here') ||
+    normalized.includes('who made you') ||
+    normalized.includes('who created you') ||
+    normalized.includes('introduce yourself')
+  ) {
+    return {
+      intent: 'CONVERSATION',
+      response:
+        'Iam ISHA... Venu created me ! well Now i deal with his laptop and all the digital chaos, whether he likes it or not!',
+      status: 'SUCCESS',
+    };
   }
 
   if (
