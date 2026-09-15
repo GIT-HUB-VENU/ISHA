@@ -55,7 +55,7 @@ export const FeaturesSection = () => {
   return (
     <section
       id="features-section"
-      className="min-h-screen w-full px-8 md:px-20 lg:px-32 py-28 flex flex-col justify-center select-none bg-black text-white relative z-10 border-t border-slate-900"
+      className="min-h-screen w-full px-8 md:px-20 lg:px-32 py-28 flex flex-col justify-center select-none bg-transparent text-white relative z-10 border-t border-slate-900/60"
     >
       <div className="max-w-6xl">
         <div className="flex items-center gap-3 mb-6">

@@ -4,7 +4,7 @@ export const AboutSection = () => {
   return (
     <section
       id="about-section"
-      className="min-h-screen w-full px-8 md:px-20 lg:px-32 py-28 flex flex-col justify-center select-none bg-black text-white relative z-10"
+      className="min-h-screen w-full px-8 md:px-20 lg:px-32 py-28 flex flex-col justify-center select-none bg-transparent text-white relative z-10"
     >
       <div className="max-w-4xl">
         {/* Subtle Section Header */}

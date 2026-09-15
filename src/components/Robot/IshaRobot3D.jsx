@@ -52,9 +52,8 @@ export const IshaRobot3D = ({
     const canvas = canvasRef.current;
     if (!container || !canvas) return;
 
-    // 1. Three.js Scene Setup
+    // 1. Three.js Scene Setup (Transparent to merge seamlessly with background)
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000);
 
     // 2. Camera View
     const width = container.clientWidth || 600;
@@ -63,13 +62,14 @@ export const IshaRobot3D = ({
     camera.position.set(0, 0.04, 5.0);
     camera.lookAt(0, -0.02, 0);
 
-    // 3. WebGL Renderer with High-End Tonemapping
+    // 3. WebGL Renderer with High-End Tonemapping & Alpha Transparency
     const renderer = new THREE.WebGLRenderer({
       canvas,
       antialias: true,
       alpha: true,
       powerPreference: 'high-performance',
     });
+    renderer.setClearColor(0x000000, 0);
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
