@@ -4,6 +4,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -13,15 +14,19 @@
   from {
     transform: rotate(360deg);
   }
+
   to {
     transform: rotate(0deg);
   }
 }
 
 @keyframes floatSlow {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px) scale(1);
   }
+
   50% {
     transform: translateY(-25px) scale(1.08);
   }
@@ -31,6 +36,7 @@
   0% {
     transform: translateY(-100%);
   }
+
   100% {
     transform: translateY(1000%);
   }
@@ -52,3 +58,52 @@
   animation: scanline 8s ease-in-out infinite;
 }
 
+@keyframes subtitleFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes professionalLetterReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.94);
+    filter: blur(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0px);
+  }
+}
+
+.animate-subtitle-fade {
+  animation: subtitleFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.2s;
+}
+
+.animate-letter-reveal {
+  animation: professionalLetterReveal 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes cyanCirclePulse {
+  0% {
+    transform: scale(0.3) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.08) rotate(180deg);
+    opacity: 0.35;
+  }
+}
+
+.animate-cyan-circle-pulse {
+  animation: cyanCirclePulse 2.4s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.2s;
+}

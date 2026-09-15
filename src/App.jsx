@@ -10,6 +10,7 @@ import { AboutSection } from './components/About/AboutSection.jsx';
 import { FeaturesSection } from './components/Features/FeaturesSection.jsx';
 import { FuturisticBackground } from './components/Background/FuturisticBackground.jsx';
 import { SystemConsoleModal } from './components/Diagnostics/SystemConsoleModal.jsx';
+import { IntroSplash } from './components/Intro/IntroSplash.jsx';
 import {
   startVoiceListening,
   stopVoiceListening,
@@ -24,6 +25,7 @@ export default function App() {
   const [lastUserRequest, setLastUserRequest] = useState(null);
   const [lastSpeechFeedback, setLastSpeechFeedback] = useState(null);
   const [isMicActive, setIsMicActive] = useState(false);
+  const [showIntro, setShowIntro] = useState(true);
 
   const homeRef = useRef(null);
   const aboutRef = useRef(null);
@@ -146,6 +148,9 @@ export default function App() {
       id="isha-app-root"
       className="relative min-h-screen bg-black text-white selection:bg-cyan-500 selection:text-black overflow-x-hidden font-['Space_Grotesk',sans-serif]"
     >
+      {/* Introduction Screen on reload */}
+      {showIntro && <IntroSplash onComplete={() => setShowIntro(false)} />}
+
       {/* Background Ambience */}
       <FuturisticBackground />
 
