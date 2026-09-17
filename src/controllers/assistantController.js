@@ -39,6 +39,8 @@ export async function parseAndExecuteCommand(commandText) {
 
   // Speech-to-Text Phonetic Normalization for High-Precision Matching
   normalized = normalized
+    .replace(/\b(?:hi|hai)(?:\s+(?:hi|hai))+\b/g, 'hi')
+    .replace(/\bhai\b/g, 'hi')
     .replace(/\b(?:clothes|closed|closing|clause|cross)\b/g, 'close')
     .replace(/\bwhat'?s?\s*app\b/g, 'whatsapp')
     .replace(/\bwasap\b/g, 'whatsapp')

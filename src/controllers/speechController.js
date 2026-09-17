@@ -238,13 +238,14 @@ export function initSpeechEngine(callbacks = {}) {
           transcript === 'isha' ||
           transcript === 'hey isha' ||
           transcript === 'hi isha' ||
+          transcript === 'hai isha' ||
           transcript === 'ok isha' ||
           transcript === 'eesha';
 
         if (isOnlyWakeWord) continue;
 
         const cleanCommand = rawTranscript
-          .replace(/^(?:hey|hi|ok|okay)?\s*(?:isha|easha|eesha|asia)[,\s]*/i, '')
+          .replace(/^(?:hey|hi|hai|ok|okay)?\s*(?:isha|easha|eesha|asia)[,\s]*/i, '')
           .trim() || rawTranscript;
 
         // Show live spoken transcript to user as they speak
@@ -286,6 +287,7 @@ export function initSpeechEngine(callbacks = {}) {
           lowerClean.includes('write') ||
           lowerClean.includes('read') ||
           lowerClean.includes('hi') ||
+          lowerClean.includes('hai') ||
           lowerClean.includes('hello') ||
           lowerClean.includes('who');
 
@@ -316,7 +318,7 @@ export function initSpeechEngine(callbacks = {}) {
 
       if (isWakeWordPresent) {
         let commandPart = rawTranscript
-          .replace(/.*(?:hey|hi|ok|okay)?\s*(?:isha|easha|eesha|asia|esha|ishah|isa)[,\s]*/i, '')
+          .replace(/.*(?:hey|hi|hai|ok|okay)?\s*(?:isha|easha|eesha|asia|esha|ishah|isa)[,\s]*/i, '')
           .trim();
 
         if (onStateChange) onStateChange(ASSISTANT_STATES.WAKE_DETECTED);

@@ -33,6 +33,8 @@ export function handleDesktopCommand(commandText) {
 
   // Speech-to-Text Phonetic Normalization for High-Precision Matching
   normalized = normalized
+    .replace(/\b(?:hi|hai)(?:\s+(?:hi|hai))+\b/g, 'hi')
+    .replace(/\bhai\b/g, 'hi')
     .replace(/\b(?:clothes|closed|closing|clause|cross)\b/g, 'close')
     .replace(/\bwhat'?s?\s*app\b/g, 'whatsapp')
     .replace(/\bwasap\b/g, 'whatsapp')
@@ -770,10 +772,20 @@ export function handleDesktopCommand(commandText) {
   // 6. Web Search & YouTube & Quick Sites (ChatGPT, GitHub, Wikipedia)
   if (normalized.includes('youtube') || (normalized.startsWith('play ') && !normalized.includes('music'))) {
     let query = commandText
-      .replace(/^(?:play|search|on|youtube)\s*/gi, '')
-      .replace(/\s*(?:on\s*youtube|youtube)$/gi, '')
+      .replace(/^(?:open|launch|go\s*to|play|search\s*for|search)\s+/gi, '')
+      .replace(/\s*(?:in\s*youtube|on\s*youtube|for\s*youtube|youtube)$/gi, '')
+      .replace(/^youtube\s*(?:for|in|on)?\s*/gi, '')
+      .replace(/^(?:for|in|on)\s+/gi, '')
       .trim();
-    if (!query) query = 'trending music';
+
+    if (!query || query.toLowerCase() === 'search' || query.toLowerCase() === 'open') {
+      exec('start chrome "https://www.youtube.com" || start msedge "https://www.youtube.com"', () => { });
+      return {
+        intent: 'OPEN_APPLICATION',
+        response: 'Opening YouTube.',
+        status: 'SUCCESS',
+      };
+    }
 
     exec(`start chrome "https://www.youtube.com/results?search_query=${encodeURIComponent(query)}" || start msedge "https://www.youtube.com/results?search_query=${encodeURIComponent(query)}"`, () => { });
     return {

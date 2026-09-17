@@ -496,21 +496,99 @@ export function createIshaRobot() {
   particleGroup.add(particleSystem);
   rootGroup.add(particleGroup);
 
-  // ==================== PLATFORM ====================
+  // ==================== METALLIC THICK DISC PLATFORM ====================
   const platformGroup = new THREE.Group();
   platformGroup.name = 'PlatformGroup';
   platformGroup.position.set(0, -1.8, 0);
 
-  const discGeo = new THREE.CylinderGeometry(1.55, 1.55, 0.02, 64);
-  const discMat = new THREE.MeshStandardMaterial({
-    color: new THREE.Color(0x06080d),
-    metalness: 0.85,
-    roughness: 0.12,
+  // High-End Physical & Metallic Materials
+  const darkAlloyMat = new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color(0x111625),
+    metalness: 0.92,
+    roughness: 0.16,
+    clearcoat: 0.6,
+    clearcoatRoughness: 0.12,
+    reflectivity: 0.9,
+    envMap: envTexture,
+    envMapIntensity: 1.4,
   });
-  const discMesh = new THREE.Mesh(discGeo, discMat);
-  discMesh.receiveShadow = true;
-  platformGroup.add(discMesh);
 
+  const brushedSteelMat = new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color(0x243248),
+    metalness: 0.96,
+    roughness: 0.1,
+    clearcoat: 0.85,
+    clearcoatRoughness: 0.08,
+    envMap: envTexture,
+    envMapIntensity: 1.8,
+  });
+
+  const topPanelMat = new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color(0x090d16),
+    metalness: 0.86,
+    roughness: 0.2,
+    clearcoat: 0.3,
+    envMap: envTexture,
+    envMapIntensity: 1.2,
+  });
+
+  // 1. Heavy Base Foundation Tier (Bottom Slanted Ring)
+  const baseFoundationGeo = new THREE.CylinderGeometry(1.68, 1.76, 0.06, 64);
+  const baseFoundationMesh = new THREE.Mesh(baseFoundationGeo, darkAlloyMat);
+  baseFoundationMesh.position.y = -0.22;
+  baseFoundationMesh.castShadow = true;
+  baseFoundationMesh.receiveShadow = true;
+  platformGroup.add(baseFoundationMesh);
+
+  // 2. Main Thick Metallic Disc Body
+  const mainDiscGeo = new THREE.CylinderGeometry(1.60, 1.66, 0.16, 64);
+  const mainDiscMesh = new THREE.Mesh(mainDiscGeo, darkAlloyMat);
+  mainDiscMesh.position.y = -0.10;
+  mainDiscMesh.castShadow = true;
+  mainDiscMesh.receiveShadow = true;
+  platformGroup.add(mainDiscMesh);
+
+  // 3. Side Wall Recessed Cyan Glow Strip
+  const sideGlowGeo = new THREE.TorusGeometry(1.635, 0.009, 16, 96);
+  sideGlowGeo.rotateX(Math.PI / 2);
+  const sideGlowMesh = new THREE.Mesh(sideGlowGeo, cyanGlowMat);
+  sideGlowMesh.position.y = -0.10;
+  platformGroup.add(sideGlowMesh);
+
+  // 4. Polished Steel Top Edge Bevel Rim
+  const topBevelRimGeo = new THREE.TorusGeometry(1.60, 0.022, 16, 96);
+  topBevelRimGeo.rotateX(Math.PI / 2);
+  const topBevelRimMesh = new THREE.Mesh(topBevelRimGeo, brushedSteelMat);
+  topBevelRimMesh.position.y = -0.01;
+  topBevelRimMesh.castShadow = true;
+  platformGroup.add(topBevelRimMesh);
+
+  // 5. Inset Top Faceplate
+  const topFaceGeo = new THREE.CylinderGeometry(1.57, 1.57, 0.02, 64);
+  const topFaceMesh = new THREE.Mesh(topFaceGeo, topPanelMat);
+  topFaceMesh.position.y = 0.00;
+  topFaceMesh.receiveShadow = true;
+  platformGroup.add(topFaceMesh);
+
+  // 6. Side Tech Brackets & LED Accents (12 Radial Metallic Clamps)
+  const bracketGeo = new THREE.BoxGeometry(0.04, 0.14, 0.06);
+  const ledGeo = new THREE.SphereGeometry(0.012, 8, 8);
+  for (let b = 0; b < 12; b++) {
+    const angle = (b * Math.PI * 2) / 12;
+    const bracketMesh = new THREE.Mesh(bracketGeo, brushedSteelMat);
+    const radius = 1.64;
+    bracketMesh.position.set(Math.cos(angle) * radius, -0.10, Math.sin(angle) * radius);
+    bracketMesh.rotation.y = -angle;
+    bracketMesh.castShadow = true;
+    platformGroup.add(bracketMesh);
+
+    // Cyan LED dot on each bracket
+    const ledMesh = new THREE.Mesh(ledGeo, cyanGlowMat);
+    ledMesh.position.set(Math.cos(angle) * (radius + 0.031), -0.10, Math.sin(angle) * (radius + 0.031));
+    platformGroup.add(ledMesh);
+  }
+
+  // 7. Foot Shadow Decals (Preserving exact robot foot shadows on top surface)
   const footShadowGeo = new THREE.CircleGeometry(0.24, 32);
   footShadowGeo.rotateX(-Math.PI / 2);
   footShadowGeo.scale(1.0, 1.0, 1.4);
@@ -529,28 +607,30 @@ export function createIshaRobot() {
   rightFootShadow.rotation.y = -0.12;
   platformGroup.add(rightFootShadow);
 
+  // 8. Top Surface Sci-Fi Illuminated Ring Circuits
   const ringOuterGeo = new THREE.TorusGeometry(1.52, 0.012, 16, 96);
   ringOuterGeo.rotateX(Math.PI / 2);
   const ringMesh = new THREE.Mesh(ringOuterGeo, cyanGlowMat);
   ringMesh.position.y = 0.014;
   platformGroup.add(ringMesh);
 
-  const innerRingGeo = new THREE.TorusGeometry(0.98, 0.005, 12, 64);
+  const innerRingGeo = new THREE.TorusGeometry(0.98, 0.006, 12, 64);
   innerRingGeo.rotateX(Math.PI / 2);
   const innerRingMat = new THREE.MeshBasicMaterial({
     color: new THREE.Color(0x1e3a5f),
     transparent: true,
-    opacity: 0.45,
+    opacity: 0.55,
   });
   const innerRingMesh = new THREE.Mesh(innerRingGeo, innerRingMat);
   innerRingMesh.position.y = 0.014;
   platformGroup.add(innerRingMesh);
 
+  // 9. Precision Radial Tick Marks / Power Bar Notches on Top Face
   const tickGeo = new THREE.BoxGeometry(0.12, 0.005, 0.02);
   const tickMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
-  for (let t = 0; t < 4; t++) {
+  for (let t = 0; t < 12; t++) {
     const tickMesh = new THREE.Mesh(tickGeo, tickMat);
-    const angle = (t * Math.PI) / 2;
+    const angle = (t * Math.PI * 2) / 12;
     tickMesh.position.set(Math.cos(angle) * 1.35, 0.014, Math.sin(angle) * 1.35);
     tickMesh.rotation.y = -angle;
     platformGroup.add(tickMesh);
