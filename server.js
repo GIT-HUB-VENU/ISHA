@@ -12,10 +12,20 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'dist')));
 
-app.post('/api/command', (req, res) => {
+app.post('/api/command', async (req, res) => {
   const { command } = req.body;
-  const result = handleDesktopCommand(command || '');
-  res.json(result);
+  try {
+    const result = await handleDesktopCommand(command || '');
+    res.json(result);
+  } catch (err) {
+    console.error('Error handling desktop command:', err);
+    res.status(500).json({
+      success: false,
+      intent: 'ERROR',
+      response: "I couldn't complete that operation.",
+      status: 'FAILED',
+    });
+  }
 });
 
 app.get('*', (req, res) => {

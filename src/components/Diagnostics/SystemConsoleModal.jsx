@@ -118,6 +118,18 @@ export const SystemConsoleModal = ({
           </p>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <button
+              onClick={() => onRunTestCommand('Open IDE')}
+              className="text-left px-2 py-1.5 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 text-slate-300 cursor-pointer"
+            >
+              &gt; Open IDE
+            </button>
+            <button
+              onClick={() => onRunTestCommand('open IDLE')}
+              className="text-left px-2 py-1.5 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 text-slate-300 cursor-pointer"
+            >
+              &gt; open IDLE
+            </button>
+            <button
               onClick={() => onRunTestCommand('open chrome')}
               className="text-left px-2 py-1.5 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 text-slate-300 cursor-pointer"
             >

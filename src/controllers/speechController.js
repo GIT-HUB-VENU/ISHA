@@ -1,6 +1,8 @@
 /**
  * I.S.H.A Real-time Voice Wake-Word & Sequential Speech Command Engine
- * - Listens continuously for the "ISHA" wake word.
+ * - Listens continuously for the "ISHA" wake word with zero-lag sensitivity.
+ * - Handles whispers, low tones, loud speech, and broad acoustic frequency variations.
+ * - Inspects multiple speech alternatives (maxAlternatives = 5) & interim results instantly.
  * - Upon wake word detection, speaks "Yes?" verbally and displays ISHA: "Yes?".
  * - Re-arms microphone immediately after "Yes?" finishes speaking for a 5-second command window.
  * - Collects full spoken commands (debounced for complete sentences like "open calculator").
@@ -20,6 +22,31 @@ let activeCallbacks = {};
 
 export function isSpeechSupported() {
   return typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
+}
+
+/**
+ * Robust, zero-lag wake word detector covering whispers, low tones, loud voices, and phonetic variations.
+ */
+export function detectWakeWord(text) {
+  if (!text || typeof text !== 'string') return false;
+  const norm = text.toLowerCase().trim();
+
+  // 1. Direct phonetic & whisper string matches
+  const directPhonetics = [
+    'isha', 'eesha', 'easha', 'esha', 'ishah', 'isa', 'asia',
+    'aisha', 'eyesha', 'ysha', 'hisha', 'hesha', 'asha', 'ayasha',
+    'is ha', 'is a', 'is ah', 'ee sha', 'i sha', 'is-ha', 'ee-sha',
+    'ish', 'ishaa', 'eshaa', 'eeshaa', 'isaa', 'eash', 'is her', 'is he',
+    'it\'s a', 'is how', 'is high', 'us ha', 'as ha', 'hi isha', 'hey isha'
+  ];
+
+  for (const word of directPhonetics) {
+    if (norm.includes(word)) return true;
+  }
+
+  // 2. Comprehensive fuzzy regex matching across pitch, whisper & frequency variations
+  const wakeRegex = /\b(?:isha|easha|eesha|esha|ishah|isa|asia|aisha|eyesha|ysha|asha|hisha|hesha|ayasha|ee\s*sha|i\s*sha|is\s*ha|is\s*a|is\s*ah|is\s*her|is\s*he|is\s*how|is\s*high|it'?s\s*a|ish)\b/i;
+  return wakeRegex.test(norm);
 }
 
 export function speakResponse(text, onStart, onEnd) {
@@ -85,17 +112,16 @@ export function rearmSpeechRecognition() {
       try {
         recognitionInstance.start();
       } catch (_) {
-        // Retry if browser transition was in progress
         setTimeout(() => {
           try {
             recognitionInstance.start();
           } catch (_) {}
-        }, 300);
+        }, 150);
       }
     }, delay);
   };
 
-  attemptStart(120);
+  attemptStart(50);
 }
 
 // Pre-warm Web Speech Synthesis voices for zero-latency TTS responses
@@ -132,10 +158,10 @@ if (typeof window !== 'undefined') {
       try {
         recognitionInstance.start();
       } catch (_) {
-        // Speech recognition is already active and listening
+        // Speech recognition is active
       }
     }
-  }, 7000);
+  }, 2000);
 }
 
 export function resetCommandTimeout(callbacks) {
@@ -172,6 +198,7 @@ export function initSpeechEngine(callbacks = {}) {
   const recognition = new SpeechRecognition();
   recognition.continuous = true;
   recognition.interimResults = true;
+  recognition.maxAlternatives = 5; // Multi-alternative evaluation for whispers & low volume tones
   recognition.lang = 'en-US';
 
   recognition.onstart = () => {
@@ -189,7 +216,6 @@ export function initSpeechEngine(callbacks = {}) {
       if (onStateChange) onStateChange(ASSISTANT_STATES.OFFLINE);
       if (onError) onError('Microphone access denied. Please grant microphone permissions.');
     } else {
-      // Auto-recover continuously from temporary network or browser errors
       rearmSpeechRecognition();
     }
   };
@@ -204,9 +230,9 @@ export function initSpeechEngine(callbacks = {}) {
             try {
               recognition.start();
             } catch (_) {}
-          }, 400);
+          }, 150);
         }
-      }, 100);
+      }, 50);
     }
   };
 
@@ -215,7 +241,24 @@ export function initSpeechEngine(callbacks = {}) {
 
     for (let i = event.resultIndex; i < event.results.length; i++) {
       const result = event.results[i];
-      const rawTranscript = result[0].transcript.trim();
+      let bestTranscript = '';
+      let wakeDetectedInAlt = false;
+
+      // Evaluate top alternatives for whispers, low tones, and pitch variations
+      for (let j = 0; j < result.length; j++) {
+        const altText = (result[j]?.transcript || '').trim();
+        if (!altText) continue;
+
+        if (!bestTranscript) bestTranscript = altText;
+
+        if (detectWakeWord(altText)) {
+          bestTranscript = altText;
+          wakeDetectedInAlt = true;
+          break;
+        }
+      }
+
+      const rawTranscript = bestTranscript;
       const transcript = rawTranscript.toLowerCase();
 
       if (!transcript) continue;
@@ -245,7 +288,7 @@ export function initSpeechEngine(callbacks = {}) {
         if (isOnlyWakeWord) continue;
 
         const cleanCommand = rawTranscript
-          .replace(/^(?:hey|hi|hai|ok|okay)?\s*(?:isha|easha|eesha|asia)[,\s]*/i, '')
+          .replace(/^(?:hey|hi|hai|ok|okay)?\s*(?:isha|easha|eesha|asia|esha|ishah|isa|aisha|eyesha|ysha|asha|hisha|hesha|ayasha|ee\s*sha|i\s*sha|is\s*ha|is\s*a|is\s*ah|is\s*her|is\s*he|is\s*how|is\s*high|it'?s\s*a|ish)[,\s]*/i, '')
           .trim() || rawTranscript;
 
         // Show live spoken transcript to user as they speak
@@ -264,41 +307,11 @@ export function initSpeechEngine(callbacks = {}) {
           }
         };
 
-        const lowerClean = cleanCommand.toLowerCase();
-        const words = lowerClean.split(/\s+/).filter(Boolean);
-        const wordCount = words.length;
-
-        const hasActionVerb =
-          lowerClean.includes('open') ||
-          lowerClean.includes('close') ||
-          lowerClean.includes('repeat') ||
-          lowerClean.includes('say') ||
-          lowerClean.includes('clothes') ||
-          lowerClean.includes('closed') ||
-          lowerClean.includes('closing') ||
-          lowerClean.includes('launch') ||
-          lowerClean.includes('start') ||
-          lowerClean.includes('stop') ||
-          lowerClean.includes('exit') ||
-          lowerClean.includes('quit') ||
-          lowerClean.includes('kill') ||
-          lowerClean.includes('shut') ||
-          lowerClean.includes('create') ||
-          lowerClean.includes('write') ||
-          lowerClean.includes('read') ||
-          lowerClean.includes('hi') ||
-          lowerClean.includes('hai') ||
-          lowerClean.includes('hello') ||
-          lowerClean.includes('who');
-
-        // A complete command phrase contains an action verb AND target application/object (word count >= 2)
-        const isCompletePhrase = hasActionVerb && wordCount >= 2;
-
         if (result.isFinal) {
           dispatchCommand();
         } else {
-          // Wait 1.5 seconds (1500ms) of full silence if speech is still interim, allowing user to complete sentence fully
-          debounceExecutionTimer = setTimeout(dispatchCommand, 1500);
+          // 1200ms debounce of silence if speech is still interim, allowing complete sentence delivery
+          debounceExecutionTimer = setTimeout(dispatchCommand, 1200);
         }
 
         break;
@@ -307,24 +320,17 @@ export function initSpeechEngine(callbacks = {}) {
       // -------------------------------------------------------------
       // STAGE 1: Standby background monitoring for "ISHA" wake word
       // -------------------------------------------------------------
-      const isWakeWordPresent =
-        transcript.includes('isha') ||
-        transcript.includes('easha') ||
-        transcript.includes('eesha') ||
-        transcript.includes('esha') ||
-        transcript.includes('ishah') ||
-        transcript.includes('isa') ||
-        transcript.includes('asia');
+      const isWakeWordPresent = wakeDetectedInAlt || detectWakeWord(transcript);
 
       if (isWakeWordPresent) {
         let commandPart = rawTranscript
-          .replace(/.*(?:hey|hi|hai|ok|okay)?\s*(?:isha|easha|eesha|asia|esha|ishah|isa)[,\s]*/i, '')
+          .replace(/.*?(?:hey|hi|hai|ok|okay)?\s*(?:isha|easha|eesha|asia|esha|ishah|isa|aisha|eyesha|ysha|asha|hisha|hesha|ayasha|ee\s*sha|i\s*sha|is\s*ha|is\s*a|is\s*ah|is\s*her|is\s*he|is\s*how|is\s*high|it'?s\s*a|ish)[,\s]*/i, '')
           .trim();
 
         if (onStateChange) onStateChange(ASSISTANT_STATES.WAKE_DETECTED);
 
         if (commandPart.length > 1) {
-          // Inline command spoken with wake word (e.g. "ISHA open calculator")
+          // Inline command spoken with wake word (e.g. "ISHA open calculator" or whispered "isha open calc")
           if (onRequest) onRequest(commandPart);
 
           if (debounceExecutionTimer) clearTimeout(debounceExecutionTimer);
@@ -338,7 +344,7 @@ export function initSpeechEngine(callbacks = {}) {
           if (result.isFinal) {
             dispatchInlineCommand();
           } else {
-            debounceExecutionTimer = setTimeout(dispatchInlineCommand, 1500);
+            debounceExecutionTimer = setTimeout(dispatchInlineCommand, 1200);
           }
         } else {
           // Only wake word spoken -> Reply "Yes?", display ISHA: "Yes?", then open 5s command window
@@ -355,7 +361,6 @@ export function initSpeechEngine(callbacks = {}) {
               if (onStateChange) onStateChange(ASSISTANT_STATES.LISTENING);
               if (onFeedback) onFeedback('Yes? Listening for command... (5s remaining)');
               resetCommandTimeout(activeCallbacks);
-              // Uninterrupted continuous stream: keep existing recognition session if active
               if (!isListeningActive) {
                 rearmSpeechRecognition();
               }

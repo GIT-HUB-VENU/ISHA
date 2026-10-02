@@ -42,6 +42,7 @@ export async function parseAndExecuteCommand(commandText) {
     .replace(/\b(?:hi|hai)(?:\s+(?:hi|hai))+\b/g, 'hi')
     .replace(/\bhai\b/g, 'hi')
     .replace(/\b(?:clothes|closed|closing|clause|cross)\b/g, 'close')
+    .replace(/\bright\b/g, 'write')
     .replace(/\bwhat'?s?\s*app\b/g, 'whatsapp')
     .replace(/\bwasap\b/g, 'whatsapp')
     .replace(/\bcalc(?:ulator|ater|ulation)?\b/g, 'calculator')
@@ -50,6 +51,8 @@ export async function parseAndExecuteCommand(commandText) {
     .replace(/\bcrome\b/g, 'chrome')
     .replace(/\bbrave\s*browser\b/g, 'brave')
     .replace(/\b(?:vs\s*code|visual\s*studio\s*code|code\s*editor)\b/g, 'vscode')
+    .replace(/\b(?:antigravity\s*ide|anti\s*gravity\s*ide|antigravity|i\.?\s*d\.?\s*e\.?)\b/g, 'antigravity_ide')
+    .replace(/\b(?:python\s*idle|idele|idell|ideal|i\s*dele|i\.?\s*d\.?l\.?\s*e\.?)\b/g, 'idle')
     .replace(/\btask\s*manager\b/g, 'taskmanager')
     .replace(/\bcommand\s*prompt\b/g, 'terminal')
     .replace(/\bfile\s*(?:explorer|manager)\b/g, 'explorer')
@@ -73,6 +76,8 @@ export async function parseAndExecuteCommand(commandText) {
       normalized.includes('exit all') ||
       normalized.includes('stop all') ||
       normalized.includes('kill all') ||
+      normalized.includes('close every application') ||
+      normalized.includes('close every app') ||
       normalized === 'close all applications' ||
       normalized === 'close all application' ||
       normalized === 'close all apps' ||
@@ -85,7 +90,33 @@ export async function parseAndExecuteCommand(commandText) {
     if (isCloseAllCommand) {
       return {
         intent: 'CLOSE_ALL_APPLICATIONS',
-        response: 'Closed all opened applications except Chrome.',
+        response: 'Closed all open applications!',
+        status: 'SUCCESS',
+      };
+    }
+
+    const isContextualClose =
+      normalized === 'close this' ||
+      normalized === 'close this window' ||
+      normalized === 'remove this' ||
+      normalized === 'remove this window' ||
+      normalized === 'close it' ||
+      normalized === 'close current window' ||
+      normalized === 'close current app' ||
+      normalized === 'close active window' ||
+      normalized === 'exit this' ||
+      normalized === 'get rid of this' ||
+      normalized === 'close this tab' ||
+      normalized === 'close current tab' ||
+      normalized === 'close tab' ||
+      normalized === 'close window' ||
+      normalized.includes('close this') ||
+      normalized.includes('close tab');
+
+    if (isContextualClose) {
+      return {
+        intent: 'CLOSE_CONTEXTUAL',
+        response: normalized.includes('tab') ? 'Closed that tab!' : 'Closed that active window!',
         status: 'SUCCESS',
       };
     }
@@ -98,7 +129,27 @@ export async function parseAndExecuteCommand(commandText) {
     ) {
       return {
         intent: 'CLOSE_APPLICATION',
-        response: 'Which application would you like me to close? Please say close whatsapp, close vscode, or close task manager.',
+        response: 'Which app should I close? Try saying "close WhatsApp", "close VS Code", or "close Notepad".',
+        status: 'SUCCESS',
+      };
+    }
+
+    if (
+      normalized.includes('antigravity_ide') ||
+      normalized.includes('antigravity') ||
+      /\bide\b/.test(normalized)
+    ) {
+      return {
+        intent: 'CLOSE_APPLICATION',
+        response: 'Closed Antigravity IDE!',
+        status: 'SUCCESS',
+      };
+    }
+
+    if (normalized.includes('idle') || /\bidle\b/.test(normalized)) {
+      return {
+        intent: 'CLOSE_APPLICATION',
+        response: 'Closed Python IDLE!',
         status: 'SUCCESS',
       };
     }
@@ -110,7 +161,7 @@ export async function parseAndExecuteCommand(commandText) {
     ) {
       return {
         intent: 'CLOSE_APPLICATION',
-        response: 'Closed Visual Studio Code.',
+        response: 'Closed Visual Studio Code!',
         status: 'SUCCESS',
       };
     }
@@ -122,7 +173,7 @@ export async function parseAndExecuteCommand(commandText) {
     ) {
       return {
         intent: 'CLOSE_APPLICATION',
-        response: 'Closed Task Manager.',
+        response: 'Closed Task Manager!',
         status: 'SUCCESS',
       };
     }
@@ -134,7 +185,7 @@ export async function parseAndExecuteCommand(commandText) {
     ) {
       return {
         intent: 'CLOSE_APPLICATION',
-        response: 'Closed Windows Calculator.',
+        response: 'Closed Windows Calculator!',
         status: 'SUCCESS',
       };
     }
@@ -146,7 +197,7 @@ export async function parseAndExecuteCommand(commandText) {
     ) {
       return {
         intent: 'CLOSE_APPLICATION',
-        response: 'Closed Notepad.',
+        response: 'Closed Notepad! All saved.',
         status: 'SUCCESS',
       };
     }
@@ -158,7 +209,7 @@ export async function parseAndExecuteCommand(commandText) {
     ) {
       return {
         intent: 'CLOSE_APPLICATION',
-        response: 'Closed Google Chrome.',
+        response: 'Closed Google Chrome!',
         status: 'SUCCESS',
       };
     }
@@ -166,7 +217,7 @@ export async function parseAndExecuteCommand(commandText) {
     if (normalized.includes('whatsapp')) {
       return {
         intent: 'CLOSE_APPLICATION',
-        response: 'Closed WhatsApp application.',
+        response: 'Closed WhatsApp!',
         status: 'SUCCESS',
       };
     }
@@ -174,7 +225,7 @@ export async function parseAndExecuteCommand(commandText) {
     if (normalized.includes('brave')) {
       return {
         intent: 'CLOSE_APPLICATION',
-        response: 'Closed Brave Browser.',
+        response: 'Closed Brave Browser!',
         status: 'SUCCESS',
       };
     }
@@ -182,7 +233,7 @@ export async function parseAndExecuteCommand(commandText) {
     if (normalized.includes('spotify')) {
       return {
         intent: 'CLOSE_APPLICATION',
-        response: 'Closed Spotify.',
+        response: 'Closed Spotify!',
         status: 'SUCCESS',
       };
     }
@@ -190,7 +241,7 @@ export async function parseAndExecuteCommand(commandText) {
     if (normalized.includes('discord')) {
       return {
         intent: 'CLOSE_APPLICATION',
-        response: 'Closed Discord.',
+        response: 'Closed Discord!',
         status: 'SUCCESS',
       };
     }
@@ -198,7 +249,7 @@ export async function parseAndExecuteCommand(commandText) {
     if (normalized.includes('edge') || normalized.includes('microsoft edge')) {
       return {
         intent: 'CLOSE_APPLICATION',
-        response: 'Closed Microsoft Edge.',
+        response: 'Closed Microsoft Edge!',
         status: 'SUCCESS',
       };
     }
@@ -206,7 +257,7 @@ export async function parseAndExecuteCommand(commandText) {
     if (normalized.includes('paint') || normalized.includes('mspaint')) {
       return {
         intent: 'CLOSE_APPLICATION',
-        response: 'Closed MS Paint.',
+        response: 'Closed MS Paint!',
         status: 'SUCCESS',
       };
     }
@@ -214,7 +265,7 @@ export async function parseAndExecuteCommand(commandText) {
     if (normalized.includes('settings')) {
       return {
         intent: 'CLOSE_APPLICATION',
-        response: 'Closed Windows Settings.',
+        response: 'Closed Windows Settings!',
         status: 'SUCCESS',
       };
     }
@@ -227,7 +278,7 @@ export async function parseAndExecuteCommand(commandText) {
     ) {
       return {
         intent: 'CLOSE_APPLICATION',
-        response: 'Closed Command Terminal.',
+        response: 'Closed Command Terminal!',
         status: 'SUCCESS',
       };
     }
@@ -240,13 +291,107 @@ export async function parseAndExecuteCommand(commandText) {
     ) {
       return {
         intent: 'CLOSE_APPLICATION',
-        response: 'Closed File Explorer.',
+        response: 'Closed File Explorer!',
         status: 'SUCCESS',
       };
     }
   }
 
+  // 2a-2. Check Switch Application Intents FIRST
+  const isSwitchCommand =
+    normalized.startsWith('switch to ') ||
+    normalized.startsWith('switch back to ') ||
+    normalized.startsWith('go back to ') ||
+    normalized.startsWith('return to ') ||
+    normalized.startsWith('activate ') ||
+    normalized.startsWith('focus ') ||
+    normalized.startsWith('show ') ||
+    normalized.startsWith('bring ') ||
+    normalized.includes(' to the front') ||
+    normalized.includes(' to front') ||
+    normalized.includes(' forward') ||
+    normalized.includes(' active') ||
+    normalized.startsWith('go to ');
+
+  if (isSwitchCommand) {
+    let target = normalized
+      .replace(/^(?:switch\s+back\s+to|switch\s+to|go\s+back\s+to|return\s+to|activate|focus|show|bring|make|go\s+to)\s+/i, '')
+      .replace(/\s+(?:to\s+the\s+front|to\s+front|forward|active)$/i, '')
+      .trim();
+
+    if (target.startsWith('the ')) target = target.replace(/^the\s+/, '').trim();
+
+    if (target.includes('whatsapp') || target.includes('wasap') || target.includes("what's app")) {
+      return { intent: 'SWITCH_APPLICATION', response: 'Switched to WhatsApp!', status: 'SUCCESS' };
+    }
+    if (target.includes('vscode') || target.includes('vs code') || target.includes('code')) {
+      return { intent: 'SWITCH_APPLICATION', response: 'Switched to Visual Studio Code!', status: 'SUCCESS' };
+    }
+    if (target.includes('antigravity_ide') || target.includes('antigravity') || /\bide\b/.test(target)) {
+      return { intent: 'SWITCH_APPLICATION', response: 'Switched to Antigravity IDE!', status: 'SUCCESS' };
+    }
+    if (target.includes('idle') || /\bidle\b/.test(target)) {
+      return { intent: 'SWITCH_APPLICATION', response: 'Switched to Python IDLE!', status: 'SUCCESS' };
+    }
+    if (target.includes('calculator') || target.includes('calc')) {
+      return { intent: 'SWITCH_APPLICATION', response: 'Switched to Calculator!', status: 'SUCCESS' };
+    }
+    if (target.includes('notepad') || target.includes('notes')) {
+      return { intent: 'SWITCH_APPLICATION', response: 'Switched to Notepad!', status: 'SUCCESS' };
+    }
+    if (target.includes('chrome') || target.includes('google chrome') || target.includes('browser')) {
+      return { intent: 'SWITCH_APPLICATION', response: 'Switched to Google Chrome!', status: 'SUCCESS' };
+    }
+    if (target.includes('brave')) {
+      return { intent: 'SWITCH_APPLICATION', response: 'Switched to Brave Browser!', status: 'SUCCESS' };
+    }
+    if (target.includes('spotify')) {
+      return { intent: 'SWITCH_APPLICATION', response: 'Switched to Spotify!', status: 'SUCCESS' };
+    }
+    if (target.includes('discord')) {
+      return { intent: 'SWITCH_APPLICATION', response: 'Switched to Discord!', status: 'SUCCESS' };
+    }
+    if (target.includes('edge') || target.includes('microsoft edge')) {
+      return { intent: 'SWITCH_APPLICATION', response: 'Switched to Microsoft Edge!', status: 'SUCCESS' };
+    }
+    if (target.includes('paint') || target.includes('mspaint')) {
+      return { intent: 'SWITCH_APPLICATION', response: 'Switched to MS Paint!', status: 'SUCCESS' };
+    }
+    if (target.includes('settings')) {
+      return { intent: 'SWITCH_APPLICATION', response: 'Switched to Windows Settings!', status: 'SUCCESS' };
+    }
+    if (target.includes('terminal') || target.includes('command prompt') || target.includes('cmd') || target.includes('powershell')) {
+      return { intent: 'SWITCH_APPLICATION', response: 'Switched to Command Terminal!', status: 'SUCCESS' };
+    }
+    if (target.includes('explorer') || target.includes('file manager') || target.includes('files') || target.includes('folder')) {
+      return { intent: 'SWITCH_APPLICATION', response: 'Switched to File Explorer!', status: 'SUCCESS' };
+    }
+  }
+
   // 2b. Check Opening Intents
+  if (
+    normalized.includes('antigravity_ide') ||
+    normalized.includes('antigravity') ||
+    /\bide\b/.test(normalized)
+  ) {
+    return {
+      intent: 'OPEN_APPLICATION',
+      response: "Opening Antigravity IDE right away! Ready for coding.",
+      status: 'SUCCESS',
+    };
+  }
+
+  if (
+    normalized.includes('idle') ||
+    /\bidle\b/.test(normalized)
+  ) {
+    return {
+      intent: 'OPEN_APPLICATION',
+      response: "Opening Python IDLE on your desktop! Ready to run Python scripts.",
+      status: 'SUCCESS',
+    };
+  }
+
   if (
     normalized.includes('vscode') ||
     normalized.includes('vs code') ||
@@ -254,7 +399,7 @@ export async function parseAndExecuteCommand(commandText) {
   ) {
     return {
       intent: 'OPEN_APPLICATION',
-      response: 'Opening Visual Studio Code.',
+      response: "Firing up VS Code! Let's build something awesome.",
       status: 'SUCCESS',
     };
   }
@@ -266,7 +411,7 @@ export async function parseAndExecuteCommand(commandText) {
   ) {
     return {
       intent: 'OPEN_APPLICATION',
-      response: 'Opening Task Manager.',
+      response: "Popping open Task Manager! Let's check on your system performance.",
       status: 'SUCCESS',
     };
   }
@@ -277,7 +422,7 @@ export async function parseAndExecuteCommand(commandText) {
   ) {
     return {
       intent: 'OPEN_APPLICATION',
-      response: 'Opening Windows Calculator.',
+      response: "Launching Calculator! Time to crunch some numbers.",
       status: 'SUCCESS',
     };
   }
@@ -289,7 +434,7 @@ export async function parseAndExecuteCommand(commandText) {
   ) {
     return {
       intent: 'OPEN_APPLICATION',
-      response: 'Opening Google Chrome.',
+      response: "Opening Chrome! Where are we exploring today?",
       status: 'SUCCESS',
     };
   }
@@ -297,7 +442,7 @@ export async function parseAndExecuteCommand(commandText) {
   if (normalized.includes('whatsapp')) {
     return {
       intent: 'OPEN_APPLICATION',
-      response: 'Opening WhatsApp application.',
+      response: "Opening WhatsApp! Let's see who is messaging you.",
       status: 'SUCCESS',
     };
   }
@@ -305,7 +450,7 @@ export async function parseAndExecuteCommand(commandText) {
   if (normalized.includes('brave')) {
     return {
       intent: 'OPEN_APPLICATION',
-      response: 'Opening Brave Browser.',
+      response: "Opening Brave Browser! Shields up, ready to surf.",
       status: 'SUCCESS',
     };
   }
@@ -313,7 +458,7 @@ export async function parseAndExecuteCommand(commandText) {
   if (normalized.includes('notepad') || normalized.includes('notes')) {
     return {
       intent: 'OPEN_APPLICATION',
-      response: 'Opening Notepad.',
+      response: "Opening Notepad! Ready whenever you are to jot down your thoughts.",
       status: 'SUCCESS',
     };
   }
@@ -326,7 +471,7 @@ export async function parseAndExecuteCommand(commandText) {
   ) {
     return {
       intent: 'OPEN_APPLICATION',
-      response: 'Opening Command Terminal.',
+      response: "Launching Command Terminal! Ready for your CLI magic.",
       status: 'SUCCESS',
     };
   }
@@ -339,7 +484,7 @@ export async function parseAndExecuteCommand(commandText) {
   ) {
     return {
       intent: 'OPEN_APPLICATION',
-      response: 'Opening File Explorer.',
+      response: "Opening File Explorer in your workspace! Here are your files.",
       status: 'SUCCESS',
     };
   }
@@ -357,7 +502,7 @@ export async function parseAndExecuteCommand(commandText) {
 
     return {
       intent: 'CREATE_FILE',
-      response: `Created ${fileName} in workspace and opened in Notepad.`,
+      response: `Created ${fileName} in your workspace and opened it in Notepad. Ready for your notes!`,
       status: 'SUCCESS',
     };
   }
@@ -365,7 +510,7 @@ export async function parseAndExecuteCommand(commandText) {
   if (normalized.includes('write') || normalized.includes('append') || normalized.includes('update')) {
     return {
       intent: 'WRITE_FILE',
-      response: 'Updated file with new content and opened in Notepad.',
+      response: 'Got it! Updated your workspace file with your notes and opened it in Notepad.',
       status: 'SUCCESS',
     };
   }
@@ -395,7 +540,7 @@ export async function parseAndExecuteCommand(commandText) {
   if (isGreetingCommand) {
     return {
       intent: 'GREETING',
-      response: 'Hello! I am ISHA...',
+      response: "Hey there! ISHA at your service. What are we tackling today?",
       status: 'SUCCESS',
     };
   }
@@ -411,7 +556,7 @@ export async function parseAndExecuteCommand(commandText) {
 
     return {
       intent: 'REPEAT',
-      response: repeatPhrase || 'What would you like me to say?',
+      response: repeatPhrase || "Sure thing, what would you like me to say?",
       status: 'SUCCESS',
     };
   }
@@ -428,7 +573,7 @@ export async function parseAndExecuteCommand(commandText) {
     ) {
       return {
         intent: 'SYSTEM_CONTROL',
-        response: 'Toggled system audio mute.',
+        response: 'Muted your system audio. Shhh...',
         status: 'SUCCESS',
       };
     }
@@ -454,7 +599,7 @@ export async function parseAndExecuteCommand(commandText) {
       if (steps === 0) {
         return {
           intent: 'SYSTEM_CONTROL',
-          response: 'Toggled system audio mute.',
+          response: 'Muted your system audio. Shhh...',
           status: 'SUCCESS',
         };
       }
@@ -463,7 +608,7 @@ export async function parseAndExecuteCommand(commandText) {
 
       return {
         intent: 'SYSTEM_CONTROL',
-        response: `Increased system volume by ${steps} levels.`,
+        response: `Turned up the volume by ${steps} levels!`,
         status: 'SUCCESS',
       };
     }
@@ -489,7 +634,7 @@ export async function parseAndExecuteCommand(commandText) {
       if (steps === 0) {
         return {
           intent: 'SYSTEM_CONTROL',
-          response: 'Toggled system audio mute.',
+          response: 'Muted your system audio. Shhh...',
           status: 'SUCCESS',
         };
       }
@@ -498,10 +643,29 @@ export async function parseAndExecuteCommand(commandText) {
 
       return {
         intent: 'SYSTEM_CONTROL',
-        response: `Decreased system volume by ${steps} levels.`,
+        response: `Decreased system volume by ${steps} levels!`,
         status: 'SUCCESS',
       };
     }
+  }
+
+  // Time and Date Handlers
+  if (/\btime\b/.test(normalized) || /\bclock\b/.test(normalized) || normalized.includes("what's the time") || normalized.includes('what is the time')) {
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return {
+      intent: 'UTILITIES',
+      response: `Right now, it's ${timeStr}.`,
+      status: 'SUCCESS',
+    };
+  }
+
+  if (/\bdate\b/.test(normalized) || /\btoday\b/.test(normalized) || normalized.includes("what's the date") || normalized.includes('what is the date')) {
+    const dateStr = new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    return {
+      intent: 'UTILITIES',
+      response: `Today is ${dateStr}. Hope you're having an awesome day!`,
+      status: 'SUCCESS',
+    };
   }
 
   if (
@@ -514,12 +678,22 @@ export async function parseAndExecuteCommand(commandText) {
     normalized.includes('why are you here') ||
     normalized.includes('who made you') ||
     normalized.includes('who created you') ||
-    normalized.includes('introduce yourself')
+    normalized.includes('introduce yourself') ||
+    normalized.includes('who is isha') ||
+    normalized.includes('what is isha') ||
+    normalized.includes('tell about isha') ||
+    normalized.includes('tell me about isha') ||
+    normalized.includes('about isha') ||
+    normalized.includes('why is isha here') ||
+    normalized.includes('who made isha') ||
+    normalized.includes('who created isha') ||
+    normalized.includes('introduce isha') ||
+    normalized.includes('introduce your self')
   ) {
     return {
       intent: 'CONVERSATION',
       response:
-        'Iam ISHA... Venu created me ! well Now i deal with his laptop and all the digital chaos, whether he likes it or not!',
+        "I'm ISHA! Intelligent Speech based Human Assistant . A Windows Automation System . Well... I have Zero Interest in doing all this!  However , Venu created me Because HE was Very Lazy",
       status: 'SUCCESS',
     };
   }
@@ -534,14 +708,70 @@ export async function parseAndExecuteCommand(commandText) {
   ) {
     return {
       intent: 'GREETING',
-      response: 'Hello! I am ISHA...',
+      response: "Hey there! ISHA at your service. What are we tackling today?",
       status: 'SUCCESS',
     };
   }
 
   return {
     intent: 'CONVERSATION',
-    response: `Processed instruction: "${commandText}". Command executed.`,
+    response: generateDynamicResponse(commandText),
     status: 'SUCCESS',
   };
+}
+
+function generateDynamicResponse(commandText) {
+  if (!commandText || typeof commandText !== 'string') return "I'm ready for your command!";
+  const trimmed = commandText.trim();
+  const lower = trimmed.toLowerCase();
+
+  if (lower.startsWith('open ') || lower.startsWith('launch ') || lower.startsWith('start ') || lower.startsWith('go to ')) {
+    const target = trimmed.replace(/^(?:open|launch|start|go to)\s+/i, '');
+    return `Opening ${target} right away!`;
+  }
+
+  if (lower.startsWith('close ') || lower.startsWith('exit ') || lower.startsWith('stop ') || lower.startsWith('kill ')) {
+    const target = trimmed.replace(/^(?:close|exit|stop|kill)\s+/i, '');
+    if (target.toLowerCase() === 'this' || target.toLowerCase() === 'it' || target.toLowerCase() === 'window' || target.toLowerCase() === 'tab') {
+      return `Closed that active ${target.toLowerCase().includes('tab') ? 'tab' : 'window'}!`;
+    }
+    return `Closed ${target}!`;
+  }
+
+  if (lower.startsWith('search ') || lower.startsWith('find ') || lower.startsWith('look up ') || lower.startsWith('google ')) {
+    const query = trimmed.replace(/^(?:search|find|look up|google)\s+(?:for\s+)?/i, '');
+    return `Searching for "${query}" right away!`;
+  }
+
+  if (lower.startsWith('play ')) {
+    const item = trimmed.replace(/^play\s+/i, '');
+    return `Playing "${item}" now!`;
+  }
+
+  if (lower.startsWith('write ') || lower.startsWith('right ') || lower.startsWith('type ') || lower.startsWith('note ')) {
+    const content = trimmed.replace(/^(?:write|right|type|note)\s+/i, '');
+    return `Got it! Wrote "${content}" to your notes.`;
+  }
+
+  if (lower.startsWith('create ') || lower.startsWith('make ')) {
+    const item = trimmed.replace(/^(?:create|make)\s+/i, '');
+    return `Created ${item} in your workspace!`;
+  }
+
+  if (lower.startsWith('read ') || lower.startsWith('show ') || lower.startsWith('display ')) {
+    const item = trimmed.replace(/^(?:read|show|display)\s+/i, '');
+    return `Showing ${item}!`;
+  }
+
+  if (lower.startsWith('turn ') || lower.startsWith('set ') || lower.startsWith('change ')) {
+    const item = trimmed.replace(/^(?:turn|set|change)\s+/i, '');
+    return `Set ${item} as requested!`;
+  }
+
+  if (lower.startsWith('calculate ') || lower.startsWith('compute ')) {
+    const expr = trimmed.replace(/^(?:calculate|compute)\s+/i, '');
+    return `Calculated ${expr}!`;
+  }
+
+  return `Handled "${trimmed}"!`;
 }
