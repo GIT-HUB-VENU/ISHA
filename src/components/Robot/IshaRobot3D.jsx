@@ -1,7 +1,159 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { createIshaRobot } from './RobotGeometry.js';
 import { ASSISTANT_STATES } from '../../constants/assistant.js';
+
+/**
+ * Returns configuration parameters for each assistant state expression.
+ * Primary style reference: LISTENING state expression.
+ */
+function getExpressionConfig(state) {
+  switch (state) {
+    case ASSISTANT_STATES.IDLE:
+    case ASSISTANT_STATES.OFFLINE:
+    case ASSISTANT_STATES.READY:
+    default:
+      return {
+        key: 'IDLE',
+        scaleX: 0.95,
+        scaleY: 0.70, // Relaxed, slightly lowered eyelids
+        posY: -0.01,
+        leftScaleYMult: 1.0,
+        rightScaleYMult: 1.0,
+        leftRotZ: 0.0,
+        rightRotZ: 0.0,
+        leftPosYOffset: 0.0,
+        rightPosYOffset: 0.0,
+        blinkInterval: 2.0, // Blink every 2 seconds in IDLE state
+        blinkDuration: 0.20,
+        pulseSpeed: 3.2,
+        baseOpacity: 0.88,
+        pulseAmp: 0.07,
+        driftSpeedX: 0.0,
+        driftSpeedY: 0.0,
+        driftAmpX: 0.0,
+        driftAmpY: 0.0,
+      };
+
+    case ASSISTANT_STATES.WAKE_DETECTED:
+      return {
+        key: 'WAKE_DETECTED',
+        scaleX: 1.05,
+        scaleY: 1.15, // Perked, slightly wider alert gaze
+        posY: 0.015, // Subtle upward movement
+        leftScaleYMult: 1.0,
+        rightScaleYMult: 1.0,
+        leftRotZ: -0.02,
+        rightRotZ: 0.02,
+        leftPosYOffset: 0.0,
+        rightPosYOffset: 0.0,
+        blinkInterval: 2.8,
+        blinkDuration: 0.14, // Quick alert reaction
+        pulseSpeed: 8.0,
+        baseOpacity: 0.92,
+        pulseAmp: 0.08,
+        driftSpeedX: 0.0,
+        driftSpeedY: 0.0,
+        driftAmpX: 0.0,
+        driftAmpY: 0.0,
+      };
+
+    case ASSISTANT_STATES.LISTENING:
+      // EXACT REFERENCE: Keep current listening expression untouched
+      return {
+        key: 'LISTENING',
+        scaleX: 1.0,
+        scaleY: 1.0,
+        posY: 0.0,
+        leftScaleYMult: 1.0,
+        rightScaleYMult: 1.0,
+        leftRotZ: 0.0,
+        rightRotZ: 0.0,
+        leftPosYOffset: 0.0,
+        rightPosYOffset: 0.0,
+        blinkInterval: 3.5,
+        blinkDuration: 0.18,
+        pulseSpeed: 6.0,
+        baseOpacity: 0.85,
+        pulseAmp: 0.15, // 0.85 + Math.sin(t * 6.0) * 0.15
+        driftSpeedX: 0.0,
+        driftSpeedY: 0.0,
+        driftAmpX: 0.0,
+        driftAmpY: 0.0,
+      };
+
+    case ASSISTANT_STATES.PROCESSING:
+    case ASSISTANT_STATES.EXECUTING:
+      return {
+        key: 'PROCESSING',
+        scaleX: 0.95,
+        scaleY: 0.84, // Slightly narrowed, focused eyes
+        posY: 0.01,
+        leftScaleYMult: 1.0,
+        rightScaleYMult: 1.0,
+        leftRotZ: 0.015,
+        rightRotZ: -0.015,
+        leftPosYOffset: 0.0,
+        rightPosYOffset: 0.0,
+        blinkInterval: 4.2,
+        blinkDuration: 0.22,
+        pulseSpeed: 4.5,
+        baseOpacity: 0.88,
+        pulseAmp: 0.10,
+        driftSpeedX: 1.8, // Organic subtle drift while considering information
+        driftSpeedY: 1.3,
+        driftAmpX: 0.032,
+        driftAmpY: 0.015,
+      };
+
+    case ASSISTANT_STATES.SPEAKING:
+      // CURVED HAPPY CLOSED EYES (∩ ∩) EXPRESSION
+      return {
+        key: 'SPEAKING',
+        scaleX: 1.0,
+        scaleY: 1.0,
+        posY: 0.0,
+        leftScaleYMult: 1.0,
+        rightScaleYMult: 1.0,
+        leftRotZ: 0.0,
+        rightRotZ: 0.0,
+        leftPosYOffset: 0.0,
+        rightPosYOffset: 0.0,
+        blinkInterval: 4.0,
+        blinkDuration: 0.18,
+        pulseSpeed: 6.5,
+        baseOpacity: 0.90,
+        pulseAmp: 0.10,
+        driftSpeedX: 0.0,
+        driftSpeedY: 0.0,
+        driftAmpX: 0.0,
+        driftAmpY: 0.0,
+      };
+
+    case ASSISTANT_STATES.ERROR:
+      return {
+        key: 'ERROR',
+        scaleX: 0.95,
+        scaleY: 0.78, // Narrowed eyes with subtle awkward asymmetry
+        posY: 0.0,
+        leftScaleYMult: 0.82, // One eye slightly more closed
+        rightScaleYMult: 1.06, // Slight "hmm?" look
+        leftRotZ: 0.08, // Mild confusion tilt
+        rightRotZ: -0.04,
+        leftPosYOffset: -0.008,
+        rightPosYOffset: 0.006,
+        blinkInterval: 3.2,
+        blinkDuration: 0.20,
+        pulseSpeed: 4.0,
+        baseOpacity: 0.86,
+        pulseAmp: 0.08,
+        driftSpeedX: 0.0,
+        driftSpeedY: 0.0,
+        driftAmpX: 0.0,
+        driftAmpY: 0.0,
+      };
+  }
+}
 
 export const IshaRobot3D = ({
   assistantState,
@@ -21,31 +173,25 @@ export const IshaRobot3D = ({
   const rotationVelocity = useRef(0);
   const currentRotationY = useRef(0);
 
-  // Helper to sync state to robot eye visibility
-  const syncEyeState = useCallback((state) => {
-    if (!robotRigRef.current) return;
-    const rig = robotRigRef.current;
-
-    const isListeningState =
-      state === ASSISTANT_STATES.WAKE_DETECTED ||
-      state === ASSISTANT_STATES.LISTENING ||
-      state === ASSISTANT_STATES.PROCESSING ||
-      state === ASSISTANT_STATES.EXECUTING ||
-      state === ASSISTANT_STATES.SPEAKING;
-
-    if (isListeningState) {
-      rig.eyeGroup.visible = true;
-      rig.materials.eyeMaterial.opacity = 0.95;
-    } else {
-      rig.eyeGroup.visible = false;
-      rig.materials.eyeMaterial.opacity = 0.0;
-    }
-  }, []);
-
-  // Synchronize Assistant State to Robot Eyes whenever state updates
-  useEffect(() => {
-    syncEyeState(assistantState);
-  }, [assistantState, syncEyeState]);
+  // Eye Animation State
+  const currentEyeStateRef = useRef({
+    scaleX: 1.0,
+    scaleY: 1.0,
+    posY: 0.0,
+    leftScaleYMult: 1.0,
+    rightScaleYMult: 1.0,
+    leftRotZ: 0.0,
+    rightRotZ: 0.0,
+    leftPosYOffset: 0.0,
+    rightPosYOffset: 0.0,
+    arcScaleX: 0.0,
+    arcScaleY: 0.0,
+    lastBlinkTime: 0,
+    nextBlinkInterval: 3.5,
+    isBlinking: false,
+    blinkStartTime: 0,
+    prevStateKey: null,
+  });
 
   useEffect(() => {
     const container = containerRef.current;
@@ -121,8 +267,8 @@ export const IshaRobot3D = ({
     shadowPlane.receiveShadow = true;
     scene.add(shadowPlane);
 
-    // Immediately sync eye state for initial mount
-    syncEyeState(assistantState);
+    // Ensure eye group is visible
+    rig.eyeGroup.visible = true;
 
     // 6. Animation Loop
     let clock = new THREE.Clock();
@@ -187,10 +333,131 @@ export const IshaRobot3D = ({
         rig.chestCoreLight.intensity = 0.8 + Math.sin(elapsedTime * 3.2) * 0.35;
       }
 
-      if (rig.eyeGroup.visible) {
-        const eyePulse = 0.85 + Math.sin(elapsedTime * 6.0) * 0.15;
-        rig.materials.eyeMaterial.opacity = eyePulse;
+      // ==================== STATE-DRIVEN EYE EXPRESSION ANIMATION ENGINE ====================
+      const config = getExpressionConfig(assistantState);
+      const eyeState = currentEyeStateRef.current;
+      const isSpeaking = config.key === 'SPEAKING';
+
+      // Trigger quick alert blink when entering WAKE_DETECTED or ERROR state
+      if (eyeState.prevStateKey !== config.key) {
+        if (config.key === 'WAKE_DETECTED' || config.key === 'ERROR') {
+          eyeState.isBlinking = true;
+          eyeState.blinkStartTime = elapsedTime;
+        }
+        eyeState.prevStateKey = config.key;
       }
+
+      // Targets for capsule vs curved arc eyes
+      const targetCapsuleScaleX = isSpeaking ? 0.0 : config.scaleX;
+      const targetCapsuleScaleY = isSpeaking ? 0.0 : config.scaleY;
+      const targetArcScale = isSpeaking ? 1.0 : 0.0;
+
+      // Smooth lerp transition (~0.12 lerp speed for smooth 150ms transitions)
+      const lerp = 0.12;
+      eyeState.scaleX += (targetCapsuleScaleX - eyeState.scaleX) * lerp;
+      eyeState.scaleY += (targetCapsuleScaleY - eyeState.scaleY) * lerp;
+      eyeState.posY += (config.posY - eyeState.posY) * lerp;
+      eyeState.leftScaleYMult += (config.leftScaleYMult - eyeState.leftScaleYMult) * lerp;
+      eyeState.rightScaleYMult += (config.rightScaleYMult - eyeState.rightScaleYMult) * lerp;
+      eyeState.leftRotZ += (config.leftRotZ - eyeState.leftRotZ) * lerp;
+      eyeState.rightRotZ += (config.rightRotZ - eyeState.rightRotZ) * lerp;
+      eyeState.leftPosYOffset += (config.leftPosYOffset - eyeState.leftPosYOffset) * lerp;
+      eyeState.rightPosYOffset += (config.rightPosYOffset - eyeState.rightPosYOffset) * lerp;
+
+      eyeState.arcScaleX += (targetArcScale - eyeState.arcScaleX) * lerp;
+      eyeState.arcScaleY += (targetArcScale - eyeState.arcScaleY) * lerp;
+
+      // Organic subtle drift (PROCESSING)
+      let driftX = 0;
+      let driftY = 0;
+      if (config.driftAmpX > 0 && !isSpeaking) {
+        driftX = Math.sin(elapsedTime * config.driftSpeedX) * config.driftAmpX;
+      }
+      if (config.driftAmpY > 0 && !isSpeaking) {
+        driftY = Math.cos(elapsedTime * config.driftSpeedY) * config.driftAmpY;
+      }
+
+      // Natural Blinking Logic
+      if (!eyeState.isBlinking && elapsedTime - eyeState.lastBlinkTime > eyeState.nextBlinkInterval) {
+        eyeState.isBlinking = true;
+        eyeState.blinkStartTime = elapsedTime;
+        eyeState.lastBlinkTime = elapsedTime;
+        eyeState.nextBlinkInterval = config.blinkInterval + (Math.random() - 0.5) * 0.3;
+      }
+
+      let blinkScaleY = 1.0;
+      if (eyeState.isBlinking && !isSpeaking) {
+        const duration = config.blinkDuration || 0.18;
+        const progress = (elapsedTime - eyeState.blinkStartTime) / duration;
+        if (progress >= 1.0) {
+          eyeState.isBlinking = false;
+        } else {
+          const factor = Math.sin(progress * Math.PI);
+          blinkScaleY = 1.0 - factor * 0.95;
+        }
+      }
+
+      // Render Capsule Eyes (for IDLE, WAKE_DETECTED, LISTENING, PROCESSING, ERROR)
+      const baseLeftX = -0.46;
+      const baseRightX = 0.46;
+
+      const effectiveScaleY = eyeState.scaleY * blinkScaleY;
+      const finalLeftScaleY = Math.max(0.0, effectiveScaleY * eyeState.leftScaleYMult);
+      const finalRightScaleY = Math.max(0.0, effectiveScaleY * eyeState.rightScaleYMult);
+      const finalScaleX = Math.max(0.0, eyeState.scaleX);
+
+      rig.leftEye.scale.set(finalScaleX, finalLeftScaleY, 1.0);
+      rig.rightEye.scale.set(finalScaleX, finalRightScaleY, 1.0);
+
+      rig.leftEye.position.set(
+        baseLeftX + driftX,
+        eyeState.posY + eyeState.leftPosYOffset + driftY,
+        0
+      );
+      rig.rightEye.position.set(
+        baseRightX + driftX,
+        eyeState.posY + eyeState.rightPosYOffset + driftY,
+        0
+      );
+      rig.leftEye.rotation.z = eyeState.leftRotZ;
+      rig.rightEye.rotation.z = eyeState.rightRotZ;
+
+      // Render Curved Arc Happy Eyes (∩ ∩) for SPEAKING
+      if (rig.leftArcEye && rig.rightArcEye) {
+        let speechCadenceX = 0;
+        let speechCadenceY = 0;
+        if (isSpeaking && eyeState.arcScaleX > 0.05) {
+          speechCadenceX = Math.sin(elapsedTime * 4.5) * 0.035;
+          speechCadenceY = Math.cos(elapsedTime * 3.2) * 0.02;
+        }
+
+        let arcBlinkScaleY = 1.0;
+        if (isSpeaking && eyeState.isBlinking) {
+          const duration = config.blinkDuration || 0.18;
+          const progress = (elapsedTime - eyeState.blinkStartTime) / duration;
+          if (progress >= 1.0) {
+            eyeState.isBlinking = false;
+          } else {
+            const factor = Math.sin(progress * Math.PI);
+            arcBlinkScaleY = 1.0 - factor * 0.82; // Gently flattens during speech blink
+          }
+        }
+
+        const finalArcScaleX = Math.max(0.0, (eyeState.arcScaleX + speechCadenceX));
+        const finalArcScaleY = Math.max(0.0, (eyeState.arcScaleY + speechCadenceY) * arcBlinkScaleY);
+
+        rig.leftArcEye.scale.set(finalArcScaleX, finalArcScaleY, eyeState.arcScaleX);
+        rig.rightArcEye.scale.set(finalArcScaleX, finalArcScaleY, eyeState.arcScaleX);
+
+        const arcDriftY = isSpeaking ? Math.sin(elapsedTime * 2.0) * 0.004 : 0;
+        rig.leftArcEye.position.set(baseLeftX, -0.04 + arcDriftY, 0.005);
+        rig.rightArcEye.position.set(baseRightX, -0.04 + arcDriftY, 0.005);
+      }
+
+      // Make eye group visible & apply cyan glow pulsing
+      rig.eyeGroup.visible = true;
+      const eyePulse = config.baseOpacity + Math.sin(elapsedTime * config.pulseSpeed) * config.pulseAmp;
+      rig.materials.eyeMaterial.opacity = eyePulse;
 
       renderer.render(scene, camera);
     };
@@ -233,10 +500,10 @@ export const IshaRobot3D = ({
       scene.clear();
       robotRigRef.current = null;
     };
-  }, [syncEyeState]);
+  }, [assistantState]);
 
   // Mouse & Touch Interaction Handlers
-  const handleMouseMove = useCallback((e) => {
+  const handleMouseMove = (e) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
@@ -249,52 +516,52 @@ export const IshaRobot3D = ({
       currentRotationY.current += rotationVelocity.current;
       previousMouseX.current = e.clientX;
     }
-  }, []);
+  };
 
-  const handleMouseEnter = useCallback(() => {
+  const handleMouseEnter = () => {
     if (typeof onHoverChange === 'function') {
       onHoverChange(true);
     }
-  }, [onHoverChange]);
+  };
 
-  const handleMouseLeave = useCallback(() => {
+  const handleMouseLeave = () => {
     isDragging.current = false;
     targetMousePos.current = { x: 0, y: 0 };
     if (typeof onHoverChange === 'function') {
       onHoverChange(false);
     }
-  }, [onHoverChange]);
+  };
 
-  const handleMouseDown = useCallback((e) => {
+  const handleMouseDown = (e) => {
     isDragging.current = true;
     previousMouseX.current = e.clientX;
     rotationVelocity.current = 0;
-  }, []);
+  };
 
-  const handleMouseUp = useCallback(() => {
+  const handleMouseUp = () => {
     isDragging.current = false;
-  }, []);
+  };
 
-  const handleTouchStart = useCallback((e) => {
+  const handleTouchStart = (e) => {
     if (e.touches.length === 1) {
       isDragging.current = true;
       previousMouseX.current = e.touches[0].clientX;
       rotationVelocity.current = 0;
     }
-  }, []);
+  };
 
-  const handleTouchMove = useCallback((e) => {
+  const handleTouchMove = (e) => {
     if (isDragging.current && e.touches.length === 1) {
       const deltaX = e.touches[0].clientX - previousMouseX.current;
       rotationVelocity.current = deltaX * 0.008;
       currentRotationY.current += rotationVelocity.current;
       previousMouseX.current = e.touches[0].clientX;
     }
-  }, []);
+  };
 
-  const handleTouchEnd = useCallback(() => {
+  const handleTouchEnd = () => {
     isDragging.current = false;
-  }, []);
+  };
 
   return (
     <div

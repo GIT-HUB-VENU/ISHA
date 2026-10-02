@@ -84,8 +84,7 @@ export const SystemConsoleModal = ({
             ))}
           </div>
           <p className="text-[11px] text-slate-500 mt-2">
-            * Note: In IDLE state, the robot face is 100% glossy black. During
-            WAKE_DETECTED or LISTENING, the electric blue eyes illuminate.
+            * Note: Each assistant state (IDLE, WAKE_DETECTED, LISTENING, PROCESSING, SPEAKING, ERROR) displays a distinct, smooth eye expression.
           </p>
         </div>
 

@@ -140,6 +140,18 @@ export function createIshaRobot() {
   rightEye.position.set(0.46, 0, 0);
   eyeGroup.add(rightEye);
 
+  // --- Curved Arc Eyes for Happy Speaking State (∩ ∩) ---
+  const arcGeo = new THREE.TorusGeometry(0.12, 0.024, 16, 32, Math.PI);
+  const leftArcEye = new THREE.Mesh(arcGeo, eyeMaterial);
+  leftArcEye.position.set(-0.46, -0.04, 0.005);
+  leftArcEye.scale.set(0, 0, 0);
+  eyeGroup.add(leftArcEye);
+
+  const rightArcEye = new THREE.Mesh(arcGeo, eyeMaterial);
+  rightArcEye.position.set(0.46, -0.04, 0.005);
+  rightArcEye.scale.set(0, 0, 0);
+  eyeGroup.add(rightArcEye);
+
   headGroup.add(eyeGroup);
 
   // ==================== TOP-RIGHT ANTENNA ====================
@@ -655,6 +667,8 @@ export function createIshaRobot() {
     eyeGroup,
     leftEye,
     rightEye,
+    leftArcEye,
+    rightArcEye,
     platformGroup,
     haloRingGroup,
     particleGroup,
